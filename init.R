@@ -1,0 +1,1 @@
+setwd("d:\\#Cloud\\Dropbox\\Projects\\Kaggle\\Playground\\bike_sharing\\")
