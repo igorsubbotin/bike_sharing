@@ -1,36 +1,55 @@
-train <- read.csv('train.csv',header=TRUE)
+set.seed(1)
+source('dataloader.R')
+source('metrics.R')
 
 prepare <- function(d) {
-  d$datetime <- as.POSIXlt(d$datetime)
-  #d$hour <- as.factor(strftime(d$datetime, format="%H"))
+  d$datetime <- as.POSIXlt(d$datetime, "%Y-%m-%d %H:%M:%S", tz = "GMT")
+  d$hour <- as.integer(strftime(d$datetime, format="%H"))
   #d$season <- as.factor(d$season)
   #d$weather <- as.factor(d$weather)  
-  d <- d[,-which(names(d) %in% c("datetime","holiday","workingday"))]
-  preProcess <- 
-    preProcess(d[,c("temp", "atemp", "humidity", "windspeed")], method = "center", "scale", "knnImpute")
-  d[,c("temp", "atemp", "humidity", "windspeed")] <- 
-    predict(object = preProcess, newdata = d[,c("temp", "atemp", "humidity", "windspeed")])
+  #d <- d[,-which(names(d) %in% c("datetime","holiday","workingday"))]
+  #preProcess <- 
+  #  preProcess(d[,c("hour","season","weather","temp","atemp","humidity","windspeed")],method="center","scale")
+  #d[,c("hour","season","weather","temp","atemp","humidity","windspeed")] <- 
+  #  predict(object = preProcess, newdata = d[,c("hour","season","weather","temp","atemp","humidity","windspeed")])
   d
 }
 
 library(caret)
-library(corrplot)
-set.seed(1)
-
-# analysis
-c <- cor(train[,c("season","holiday","workingday","weather","temp","atemp","humidity","windspeed","casual","registered","count")])
-#as.matrix(c)
-corrplot(c, method="circle")
 
 # training
 #training <- train[,-which(names(train) %in% c("casual","registered"))]
-training <- train
+training <- loadTrain()
 training <- prepare(training)
-modFit <- train(casual+registered~.,data=training,method="rf",
-                trControl=trainControl(method="repeatedcv",number=10,repeats=10,allowParallel=TRUE,verboseIter=TRUE))
+modFitCasual <- train(casual~hour+workingday+humidity+temp,data=training,method="rf",
+                trControl=trainControl(method="cv",number=10,repeats=10,allowParallel=TRUE,verboseIter=TRUE))
+#varImp(modFitCasual)
+modFitRegistered <- train(registered~hour+temp+humidity+season,data=training,method="rf",
+                          trControl=trainControl(method="cv",number=10,repeats=10,allowParallel=TRUE,verboseIter=TRUE))
+#varImp(modFitRegistered)
+training$casualPred <- predict(modFitCasual,newdata=training)
+training[training$casualPred<0,]$casualPred <- 0
+training$registeredPred <- predict(modFitRegistered,newdata=training)
+training[training$registeredPred<0,]$registeredPred <- 0
+training$countPred <- training$casualPred + training$registeredPred
+training[training$countPred<0,]$countPred <- 0
+
+rmseCasual <- rmse(training$casualPred,training$casual)
+rmseRegistered <- rmse(training$registeredPred,training$registered)
+rmseCount <- rmse(training$countPred,training$count)
+rmsleCasual <- rmsle(training$casualPred,training$casual)
+rmsleRegistered <- rmsle(training$registeredPred,training$registered)
+rmsleCount <- rmsle(training$countPred,training$count)
 
 # testing
-dataTest <- read.csv('test.csv',header=TRUE)
-testing <- prepare(dataTest)
-dataTest$count <- as.integer(predict(modFit,newdata=testing))
-write.csv(dataTest[,c("datetime", "count")],file="submission.csv",row.names=F,col.names=T,quote=FALSE)
+test <- loadTest()
+#test$datetime <- as.character(test$datetime)
+#test$datetime <- as.POSIXlt(test$datetime, "%Y-%m-%d %H:%M:%S", tz = "GMT")
+testing <- prepare(test)
+test$casual <- predict(modFitCasual,newdata=testing)
+#test[test$casual<0,]$casual <- 0
+test$registered <- predict(modFitRegistered,newdata=testing)
+#test[test$registered<0,]$registered <- 0
+test$count <- test$casual + test$registered
+test[test$count<0,]$count <- 0
+write.csv(test[,c("datetime", "count")],file="submission.csv",row.names=F,col.names=T,quote=FALSE)
