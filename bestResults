@@ -1,28 +1,28 @@
 03.09.2014
-rf (n=10,r=3)
+rf (n=10,r=10)
 
 WDAY
-rmseCasualWday - 7.89
-rmseRegisteredWday - 39.26
-rmseCountWday - 42.76
-rmsleCasualWday - 0.363
-rmsleRegisteredWday - 0.271
-rmsleCountWday - 0.261
+rmseCasualWday - 5.70
+rmseRegisteredWday - 30.35
+rmseCountWday - 32.87
+rmsleCasualWday - 0.305
+rmsleRegisteredWday - 0.216
+rmsleCountWday - 0.211
 
 HDAY
-rmseCasualHday - 14.78
-rmseRegisteredHday - 26.58
-rmseCountHday - ?35.26
-rmsleCasualHday - 0.377
-rmsleRegisteredHday - 0.305
-rmsleCountHday - 0.301
+rmseCasualHday - 11.84
+rmseRegisteredHday - 20.23
+rmseCountHday - 27.47
+rmsleCasualHday - 0.338
+rmsleRegisteredHday - 0.216
+rmsleCountHday - 0.253
 
 COMBINE
-rmseCasual - 10.59
-rmseRegistered - 35.71
-rmseCount - 30.51
-rmsleCasual - 0.368
-rmsleRegistered - 0.282
-rmsleCount - 0.274
+rmseCasual - 8.18
+rmseRegistered - 27.53
+rmseCount - 31.25
+rmsleCasual - 0.316
+rmsleRegistered - 0.228
+rmsleCount - 0.225
 
 ------------------------------------

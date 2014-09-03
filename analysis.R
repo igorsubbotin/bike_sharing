@@ -6,6 +6,11 @@ train <- loadTrain()
 train$datetime <- as.POSIXlt(train$datetime)
 train$hour <- as.integer(strftime(train$datetime, format="%H"))
 train$wday <- train$datetime$wday
+train$mday <- train$datetime$mday
+train$mon <- train$datetime$mon
+train$yday <- train$datetime$yday
+train$year <- train$datetime$year
+train$isdst <- train$datetime$isdst
 #train$season <- as.factor(train$season)
 
 c <- cor(train[,c("hour","season","holiday","workingday","weather","temp","atemp","wday",
