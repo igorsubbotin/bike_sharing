@@ -5,13 +5,10 @@ source('metrics.R')
 prepare <- function(d) {
   d$datetime <- as.POSIXlt(d$datetime, "%Y-%m-%d %H:%M:%S", tz = "GMT")
   d$hour <- as.integer(strftime(d$datetime, format="%H"))
+  d$wday <- d$datetime$wday
   d$season <- as.factor(d$season)
-  #d$weather <- as.factor(d$weather)  
+  d$weather <- as.factor(d$weather)  
   #d <- d[,-which(names(d) %in% c("datetime","holiday","workingday"))]
-  #preProcess <- 
-  #  preProcess(d[,c("hour","season","weather","temp","atemp","humidity","windspeed")],method="center","scale")
-  #d[,c("hour","season","weather","temp","atemp","humidity","windspeed")] <- 
-  #  predict(object = preProcess, newdata = d[,c("hour","season","weather","temp","atemp","humidity","windspeed")])
   d
 }
 
@@ -21,13 +18,15 @@ library(plyr)
 # training
 training <- loadTrain()
 training <- prepare(training)
+#preProcess <- preProcess(training[,c("hour","temp","humidity")],method="center","scale","pca")
+#training[,c("hour","temp","humidity")] <- predict(object=preProcess,newdata=training[,c("hour","temp","humidity")])
 
 # working day
 trainingWday <- subset(training, workingday==1)
-modFitCasualWday <- train(casual~hour+humidity+temp+weather+season,data=trainingWday,method="rf",
-                trControl=trainControl(method="repeatedcv",number=10,repeats=3,allowParallel=TRUE,verboseIter=TRUE))
-modFitRegisteredWday <- train(registered~hour+humidity+temp+weather+season,data=trainingWday,method="rf",
-                          trControl=trainControl(method="repeatedcv",number=10,repeats=3,allowParallel=TRUE,verboseIter=TRUE))
+modFitCasualWday <- train(casual~hour+humidity+temp+weather+season+atemp+windspeed+wday,data=trainingWday,method="rf",
+                trControl=trainControl(method="repeatedcv",number=10,repeats=10,allowParallel=TRUE,verboseIter=TRUE))
+modFitRegisteredWday <- train(registered~hour+humidity+temp+weather+season+atemp+windspeed+wday,data=trainingWday,method="rf",
+                          trControl=trainControl(method="repeatedcv",number=10,repeats=10,allowParallel=TRUE,verboseIter=TRUE))
 trainingWday$casualPred <- predict(modFitCasualWday,newdata=trainingWday)
 trainingWday$registeredPred <- predict(modFitRegisteredWday,newdata=trainingWday)
 trainingWday$countPred <- trainingWday$casualPred + trainingWday$registeredPred
@@ -40,10 +39,10 @@ rmsleCountWday <- rmsle(trainingWday$countPred,trainingWday$count)
 
 # holiday
 trainingHday <- subset(training, workingday==0)
-modFitCasualHday <- train(casual~hour+humidity+temp+weather+season,data=trainingHday,method="rf",
-                      trControl=trainControl(method="repeatedcv",number=10,repeats=3,allowParallel=TRUE,verboseIter=TRUE))
-modFitRegisteredHday <- train(registered~hour+humidity+temp+weather+season,data=trainingHday,method="rf",
-                          trControl=trainControl(method="repeatedcv",number=10,repeats=3,allowParallel=TRUE,verboseIter=TRUE))
+modFitCasualHday <- train(casual~hour+humidity+temp+weather+season+atemp+windspeed+wday,data=trainingHday,method="rf",
+                      trControl=trainControl(method="repeatedcv",number=10,repeats=10,allowParallel=TRUE,verboseIter=TRUE))
+modFitRegisteredHday <- train(registered~hour+humidity+temp+weather+season+atemp+windspeed+wday,data=trainingHday,method="rf",
+                          trControl=trainControl(method="repeatedcv",number=10,repeats=10,allowParallel=TRUE,verboseIter=TRUE))
 trainingHday$casualPred <- predict(modFitCasualHday,newdata=trainingHday)
 trainingHday$registeredPred <- predict(modFitRegisteredHday,newdata=trainingHday)
 trainingHday$countPred <- trainingHday$casualPred + trainingHday$registeredPred
